@@ -51,7 +51,7 @@ app.MapPost("/pagar", (RequisicaoPagamento dados) =>
     }
 });
 
-app.Run(); // Faz o servidor ficar ligado por tempo indeterminado!
+app.Run(); 
 
 // O Molde dos dados que vão chegar via internet
 class RequisicaoPagamento
