@@ -37,11 +37,15 @@ app.MapPost("/pagar", (RequisicaoPagamento dados) =>
     {
         return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
     }
-    else
+    else if (dados.Compra > 0)
     {
         clienteNoBanco.Saldoinicial = clienteNoBanco.Saldoinicial - dados.Compra;
         banco.SaveChanges();
         return Results.Ok(new { mensagem = "Compra bem sucedida!" });
+    }
+    else
+    {
+        return Results.BadRequest(new { mensagem = "O valor da compra não pode ser zero ou inferior" });
     }
 
 });
