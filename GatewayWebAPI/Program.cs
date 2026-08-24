@@ -14,21 +14,16 @@ using (var banco = new AppDbContext())
 {
     banco.Database.EnsureCreated();
 }
-
-// SIMULAÇÃO DO BANCO ANTIGO EM MEMÓRIA (Mantido para a rota /pagar não quebrar)
-Dictionary<string, double> BancoDeDadosSaldos = new Dictionary<string, double>
-{
-    { "Jefferson Nogueira", 25.00 },
-    { "Edgarth Clinton", 2995.50 }
-};
-
 // === ROTA 1: PROCESSAMENTO DO PAGAMENTO (Usando o Dicionário temporariamente) ===
 app.MapPost("/pagar", (RequisicaoPagamento dados) =>
 {
     using var banco = new AppDbContext();
 
+    Console.WriteLine($"[{DateTime.Now}] INFO: Requisição de pagamentos recebida para o cliente '{dados.Cliente}'");
+
     if (string.IsNullOrWhiteSpace(dados.Cliente))
     {
+        Console.WriteLine($"[{DateTime.Now}] ERRO: O nome do cliente está em branco '{dados.Cliente}'");
         return Results.BadRequest(new { mensagem = "O nome do cliente não pode estar em branco!" });
     }
 
@@ -36,17 +31,20 @@ app.MapPost("/pagar", (RequisicaoPagamento dados) =>
 
     if (clienteNoBanco == null)
     {
+        Console.WriteLine($"[{DateTime.Now}] ERRO: O cliente não está no banco de dados '{dados.Cliente}'");
         return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
     }
-    else if (dados.Compra > 0)
+    else if (dados.Compra > 0 && clienteNoBanco.Saldoinicial >= dados.Compra)
     {
+        Console.WriteLine($"[{DateTime.Now}] INFO: Compra bem sucedida para o cliente '{dados.Cliente}'"); 
         clienteNoBanco.Saldoinicial = clienteNoBanco.Saldoinicial - dados.Compra;
         banco.SaveChanges();
         return Results.Ok(new { mensagem = "Compra bem sucedida!" });
     }
     else
     {
-        return Results.BadRequest(new { mensagem = "O valor da compra não pode ser zero ou inferior" });
+        Console.WriteLine($"[{DateTime.Now}] ERRO: Valor 0 ou inferior OU saldo insuficiente");
+        return Results.BadRequest(new { mensagem = "O valor da compra não pode ser zero ou inferior ou saldo insuficiente" });
     }
 
 });
