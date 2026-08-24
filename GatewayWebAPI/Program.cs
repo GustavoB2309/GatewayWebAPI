@@ -82,6 +82,9 @@ app.MapPost("/checkout", (RequisicaoPagamento dados) =>
 
     if (string.IsNullOrWhiteSpace(dados.Cliente))
     {
+
+        Console.WriteLine($"[{DateTime.Now}] ERRO: Nome vazio '{dados.Cliente}'");
+
         return Results.BadRequest(new { mensagem = "O nome do cliente não pode vir em branco" });
     }
 
@@ -105,6 +108,9 @@ app.MapPost("/checkout", (RequisicaoPagamento dados) =>
 
 if (dados.Compra <= 0 || clientenobanco.Saldoinicial < dados.Compra)
     {
+
+        Console.WriteLine($"[{DateTime.Now}] ERRO: Valor ou saldo insuficiente {dados.Cliente}");
+
         return Results.BadRequest(new { mensagem = "O valor da compra não pode ser 0 ou menor ou não há saldo suficiente." });
     }
 
