@@ -5,20 +5,25 @@ using GatewayWebAPI.Models;
 using GatewayWebAPI.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseSqlServer(connectionString));
+
 var app = builder.Build();
 
-// === PASSO 1: CRIAÇÃO DO BANCO SE ELE NÃO EXISTIR (LOGA DIRETAMENTE NO APP PRONTO) ===
-using (var banco = new AppDbContext())
+using (var scope = app.Services.CreateScope())
 {
+    var banco = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     banco.Database.EnsureCreated();
 }
-// === ROTA 1: PROCESSAMENTO DO PAGAMENTO (Usando o Dicionário temporariamente) ===
-app.MapPost("/pagar", (RequisicaoPagamento dados) =>
-{
-    using var banco = new AppDbContext();
 
+// === ROTA 1: PROCESSAMENTO DO PAGAMENTO (Usando o Dicionário temporariamente) ===
+app.MapPost("/pagar", (RequisicaoPagamento dados, AppDbContext banco) =>
+{
     Console.WriteLine($"[{DateTime.Now}] INFO: Requisição de pagamentos recebida para o cliente '{dados.Cliente}'");
 
     if (string.IsNullOrWhiteSpace(dados.Cliente))
@@ -58,10 +63,8 @@ app.MapPost("/pagar", (RequisicaoPagamento dados) =>
 });
 
 // === ROTA 2: CADASTRO REAL NO BANCO DE DADOS (GRAVANDO NO HD!) ===
-app.MapPost("/cadastrar", (Requisicaocadastro dados) =>
+app.MapPost("/cadastrar", (Requisicaocadastro dados, AppDbContext banco) =>
 {
-
-    using var banco = new AppDbContext();
 
     // Procura se o nome já existe na tabela do SQL Server
     var usuarioExiste = banco.Clientes.Any(c => c.Nome == dados.Nome);
@@ -80,9 +83,8 @@ app.MapPost("/cadastrar", (Requisicaocadastro dados) =>
     }
 });
 
-app.MapPost("/checkout", (RequisicaoPagamento dados) =>
+app.MapPost("/checkout", (RequisicaoPagamento dados, AppDbContext banco) =>
 {
-    using var banco = new AppDbContext();
 
     Console.WriteLine($"[{DateTime.Now}] INFO: Iniciando Checkout de {dados.Cliente}");
 

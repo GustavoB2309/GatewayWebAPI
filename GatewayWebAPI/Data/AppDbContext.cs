@@ -3,13 +3,13 @@ using GatewayWebAPI.Models;
 
 namespace GatewayWebAPI.Data
 {
-    public class AppDbContext : DbContext
-        {
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+public class AppDbContext : DbContext
     {
-        optionsBuilder.UseSqlServer(@"Server=localhost\SQLEXPRESS;DataBase=GatewayDB;Trusted_connection=True;TrustServerCertificate=True;");
-    }
 
-    public DbSet<Requisicaocadastro> Clientes { get; set; }
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+    
+public DbSet<Requisicaocadastro> Clientes { get; set; }
 }
 }
