@@ -73,5 +73,42 @@ app.MapPost("/cadastrar", (Requisicaocadastro dados) =>
     }
 });
 
+app.MapPost("/checkout", (RequisicaoPagamento dados) =>
+{
+    using var banco = new AppDbContext();
+
+    if (string.IsNullOrWhiteSpace(dados.Cliente))
+    {
+        return Results.BadRequest(new { mensagem = "O nome do cliente não pode vir em branco" });
+    }
+
+    var clientenobanco = banco.Clientes.FirstOrDefault(c => c.Nome == dados.Cliente);
+
+    if (clientenobanco == null)
+    {
+        var novoCliente = new Requisicaocadastro
+        {
+            Nome = dados.Cliente,
+            Saldoinicial = 500
+        };
+
+        banco.Clientes.Add(novoCliente);
+        banco.SaveChanges();
+
+        clientenobanco = novoCliente;
+    }
+
+if (dados.Compra <= 0 || clientenobanco.Saldoinicial < dados.Compra)
+    {
+        return Results.BadRequest(new { mensagem = "O valor da compra não pode ser 0 ou menor ou não há saldo suficiente." });
+    }
+
+    clientenobanco.Saldoinicial = clientenobanco.Saldoinicial - dados.Compra;
+    banco.SaveChanges();
+
+    return Results.Ok(new { status = "CONCLUÍDO!", mensagem = "Checkout completo.", novosaldo = clientenobanco.Saldoinicial });
+
+});
+
 // === PASSO FINAL: ISSO FAZ O SERVIDOR FICAR LIGADO SINALIZANDO A REDE! ===
 app.Run();
