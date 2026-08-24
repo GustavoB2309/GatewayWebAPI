@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using GatewayWebAPI.Models;
 using GatewayWebAPI.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -77,6 +78,8 @@ app.MapPost("/checkout", (RequisicaoPagamento dados) =>
 {
     using var banco = new AppDbContext();
 
+    Console.WriteLine($"[{DateTime.Now}] INFO: Iniciando Checkout de {dados.Cliente}");
+
     if (string.IsNullOrWhiteSpace(dados.Cliente))
     {
         return Results.BadRequest(new { mensagem = "O nome do cliente não pode vir em branco" });
@@ -98,6 +101,8 @@ app.MapPost("/checkout", (RequisicaoPagamento dados) =>
         clientenobanco = novoCliente;
     }
 
+    Console.WriteLine($"[{DateTime.Now}] INFO: Iniciando processo de compra para {dados.Cliente}");
+
 if (dados.Compra <= 0 || clientenobanco.Saldoinicial < dados.Compra)
     {
         return Results.BadRequest(new { mensagem = "O valor da compra não pode ser 0 ou menor ou não há saldo suficiente." });
@@ -105,6 +110,8 @@ if (dados.Compra <= 0 || clientenobanco.Saldoinicial < dados.Compra)
 
     clientenobanco.Saldoinicial = clientenobanco.Saldoinicial - dados.Compra;
     banco.SaveChanges();
+
+    Console.WriteLine($"[{DateTime.Now}] INFO: Checkout concluído com sucesso (pago) para {dados.Cliente}");
 
     return Results.Ok(new { status = "CONCLUÍDO!", mensagem = "Checkout completo.", novosaldo = clientenobanco.Saldoinicial });
 
