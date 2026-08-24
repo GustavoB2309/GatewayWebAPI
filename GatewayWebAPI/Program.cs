@@ -1,10 +1,5 @@
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using GatewayWebAPI.Models;
 using GatewayWebAPI.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,7 +25,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// === ROTA 1: PROCESSAMENTO DO PAGAMENTO (Usando o Dicionário temporariamente) ===
 app.MapPost("/pagar", (RequisicaoPagamento dados, AppDbContext banco) =>
 {
     Console.WriteLine($"[{DateTime.Now}] INFO: Requisição de pagamentos recebida para o cliente '{dados.Cliente}'");
@@ -71,11 +65,9 @@ app.MapPost("/pagar", (RequisicaoPagamento dados, AppDbContext banco) =>
 
 });
 
-// === ROTA 2: CADASTRO REAL NO BANCO DE DADOS (GRAVANDO NO HD!) ===
 app.MapPost("/cadastrar", (Requisicaocadastro dados, AppDbContext banco) =>
 {
 
-    // Procura se o nome já existe na tabela do SQL Server
     var usuarioExiste = banco.Clientes.Any(c => c.Nome == dados.Nome);
 
     if (usuarioExiste)
@@ -84,7 +76,6 @@ app.MapPost("/cadastrar", (Requisicaocadastro dados, AppDbContext banco) =>
     }
     else
     {
-        // Adiciona e salva fisicamente no banco de dados real
         banco.Clientes.Add(dados);
         banco.SaveChanges();
 
@@ -150,5 +141,4 @@ app.MapPost("/checkout", (RequisicaoPagamento dados, AppDbContext banco) =>
 
 });
 
-// === PASSO FINAL: ISSO FAZ O SERVIDOR FICAR LIGADO SINALIZANDO A REDE! ===
 app.Run();
