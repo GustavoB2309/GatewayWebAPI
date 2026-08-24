@@ -27,24 +27,32 @@ app.MapPost("/pagar", (RequisicaoPagamento dados) =>
         return Results.BadRequest(new { mensagem = "O nome do cliente não pode estar em branco!" });
     }
 
-     var clienteNoBanco = banco.Clientes.FirstOrDefault(c => c.Nome == dados.Cliente);
+    try
+    {
+        var clienteNoBanco = banco.Clientes.FirstOrDefault(c => c.Nome == dados.Cliente);
 
-    if (clienteNoBanco == null)
-    {
-        Console.WriteLine($"[{DateTime.Now}] ERRO: O cliente não está no banco de dados '{dados.Cliente}'");
-        return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
+        if (clienteNoBanco == null)
+        {
+            Console.WriteLine($"[{DateTime.Now}] ERRO: O cliente não está no banco de dados '{dados.Cliente}'");
+            return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
+        }
+        else if (dados.Compra > 0 && clienteNoBanco.Saldoinicial >= dados.Compra)
+        {
+            Console.WriteLine($"[{DateTime.Now}] INFO: Compra bem sucedida para o cliente '{dados.Cliente}'");
+            clienteNoBanco.Saldoinicial = clienteNoBanco.Saldoinicial - dados.Compra;
+            banco.SaveChanges();
+            return Results.Ok(new { mensagem = "Compra bem sucedida!" });
+        }
+        else
+        {
+            Console.WriteLine($"[{DateTime.Now}] ERRO: Valor 0 ou inferior OU saldo insuficiente");
+            return Results.BadRequest(new { mensagem = "O valor da compra não pode ser zero ou inferior ou saldo insuficiente" });
+        }
     }
-    else if (dados.Compra > 0 && clienteNoBanco.Saldoinicial >= dados.Compra)
+    catch (Exception erro)
     {
-        Console.WriteLine($"[{DateTime.Now}] INFO: Compra bem sucedida para o cliente '{dados.Cliente}'"); 
-        clienteNoBanco.Saldoinicial = clienteNoBanco.Saldoinicial - dados.Compra;
-        banco.SaveChanges();
-        return Results.Ok(new { mensagem = "Compra bem sucedida!" });
-    }
-    else
-    {
-        Console.WriteLine($"[{DateTime.Now}] ERRO: Valor 0 ou inferior OU saldo insuficiente");
-        return Results.BadRequest(new { mensagem = "O valor da compra não pode ser zero ou inferior ou saldo insuficiente" });
+        Console.WriteLine($"[{DateTime.Now}] CRÍTICO: Problema no SQL. Detalhes: '{erro.Message}'");
+        return Results.Problem("Desculpe, o sistema de pagamentos está instável. Tente novamente mais tarde.");
     }
 
 });
@@ -86,38 +94,48 @@ app.MapPost("/checkout", (RequisicaoPagamento dados) =>
         return Results.BadRequest(new { mensagem = "O nome do cliente não pode vir em branco" });
     }
 
-    var clientenobanco = banco.Clientes.FirstOrDefault(c => c.Nome == dados.Cliente);
-
-    if (clientenobanco == null)
+    try
     {
-        var novoCliente = new Requisicaocadastro
-        {
-            Nome = dados.Cliente,
-            Saldoinicial = 500
-        };
+        var clientenobanco = banco.Clientes.FirstOrDefault(c => c.Nome == dados.Cliente);
 
-        banco.Clientes.Add(novoCliente);
+        if (clientenobanco == null)
+        {
+            var novoCliente = new Requisicaocadastro
+            {
+                Nome = dados.Cliente,
+                Saldoinicial = 500
+            };
+
+            banco.Clientes.Add(novoCliente);
+            banco.SaveChanges();
+
+            clientenobanco = novoCliente;
+        }
+
+        Console.WriteLine($"[{DateTime.Now}] INFO: Iniciando processo de compra para {dados.Cliente}");
+
+        if (dados.Compra <= 0 || clientenobanco.Saldoinicial < dados.Compra)
+        {
+
+            Console.WriteLine($"[{DateTime.Now}] ERRO: Valor ou saldo insuficiente {dados.Cliente}");
+
+            return Results.BadRequest(new { mensagem = "O valor da compra não pode ser 0 ou menor ou não há saldo suficiente." });
+        }
+
+        clientenobanco.Saldoinicial = clientenobanco.Saldoinicial - dados.Compra;
         banco.SaveChanges();
 
-        clientenobanco = novoCliente;
+        Console.WriteLine($"[{DateTime.Now}] INFO: Checkout concluído com sucesso (pago) para {dados.Cliente}");
+
+        return Results.Ok(new { status = "CONCLUÍDO!", mensagem = "Checkout completo.", novosaldo = clientenobanco.Saldoinicial });
+
     }
 
-    Console.WriteLine($"[{DateTime.Now}] INFO: Iniciando processo de compra para {dados.Cliente}");
-
-if (dados.Compra <= 0 || clientenobanco.Saldoinicial < dados.Compra)
+    catch (Exception erro)
     {
-
-        Console.WriteLine($"[{DateTime.Now}] ERRO: Valor ou saldo insuficiente {dados.Cliente}");
-
-        return Results.BadRequest(new { mensagem = "O valor da compra não pode ser 0 ou menor ou não há saldo suficiente." });
+        Console.WriteLine($"[{DateTime.Now}] CRÍTICO: O SQL deu problema. Detalhes: '{erro.Message}'");
+        return Results.Problem("O sistema de pagamentos está com problemas nesse momento, pedimos desculpas. Tente novamente mais tarde.");
     }
-
-    clientenobanco.Saldoinicial = clientenobanco.Saldoinicial - dados.Compra;
-    banco.SaveChanges();
-
-    Console.WriteLine($"[{DateTime.Now}] INFO: Checkout concluído com sucesso (pago) para {dados.Cliente}");
-
-    return Results.Ok(new { status = "CONCLUÍDO!", mensagem = "Checkout completo.", novosaldo = clientenobanco.Saldoinicial });
 
 });
 
