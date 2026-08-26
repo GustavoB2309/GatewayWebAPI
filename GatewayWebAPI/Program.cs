@@ -31,6 +31,8 @@ app.MapPost("/pagar", PagamentoController.ProcessarPagamento);
 
 app.MapPost("/cadastrar", UsuarioController.CadastrarUsuario);
 
-app.MapPost("/checkout", PagamentoController.ProcessarCheckout); 
+app.MapPost("/checkout", PagamentoController.ProcessarCheckout);
+
+app.MapGet("/Extrato", UsuarioController.ConsultarExtrato);
 
 app.Run();

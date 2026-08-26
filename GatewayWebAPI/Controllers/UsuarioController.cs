@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using GatewayWebAPI.Models;
-using GatewayWebAPI.Data; 
+using GatewayWebAPI.Data;
 
 namespace GatewayWebAPI.Controller
 {
@@ -22,5 +22,36 @@ namespace GatewayWebAPI.Controller
                 return Results.Ok(new { mensagem = "Usuário cadastrado com sucesso no BANCO DE DADOS!" });
             }
         }
+
+        public static IResult ConsultarExtrato(string nomeCliente, AppDbContext banco)
+        {
+            Console.WriteLine($"[{DateTime.Now}] INFO: Consulta de extrato solitado por '{nomeCliente}'");
+
+            if (string.IsNullOrWhiteSpace(nomeCliente))
+            {
+                return Results.BadRequest(new { mensagem = "O nome do cliente não pode estar vazio." });
+            }
+
+            try
+            {
+                var cliente = banco.Clientes.FirstOrDefault(c => c.Nome == nomeCliente);
+
+                if (cliente == null)
+                {
+                    return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
+                }
+
+                var historicoDeVendas = banco.Vendas.Where(v => v.ClienteId == cliente.Id).ToList();
+
+                return Results.Ok(new { cliente = cliente.Nome, saldoAtual = cliente.Saldoinicial, extrato = historicoDeVendas });
+            }
+            catch (Exception erro)
+            {
+                Console.WriteLine($"[{DateTime.Now}] CRÍTICO: Falha ao ler extrato no SQL. Detalhes: '{erro.Message}'");
+                return Results.Problem("Erro interno ao processar extrato bancário.");
+            }
+
+            }
     }
+
 }
