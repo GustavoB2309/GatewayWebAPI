@@ -46,6 +46,7 @@ namespace GatewayWebAPI.Controller
                 var historicoDeVendas = banco.Vendas
                     .Where(v => v.ClienteId == cliente.Id)
                     .OrderByDescending(v => v.DataHora)
+                    .Take(3)
                     .ToList();
 
                 Console.WriteLine($"[{DateTime.Now}] INFO: Consulta de extrato concluída por '{nomeCliente}'");
