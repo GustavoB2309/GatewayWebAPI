@@ -29,6 +29,7 @@ namespace GatewayWebAPI.Controller
 
             if (string.IsNullOrWhiteSpace(nomeCliente))
             {
+                Console.WriteLine($"[{DateTime.Now}] ERRO: Nome vazio '{nomeCliente}'");
                 return Results.BadRequest(new { mensagem = "O nome do cliente não pode estar vazio." });
             }
 
@@ -38,11 +39,13 @@ namespace GatewayWebAPI.Controller
 
                 if (cliente == null)
                 {
+                    Console.WriteLine($"[{DateTime.Now}] ERRO: Cliente não encontrado no banco de dados para extrato '{nomeCliente}'");
                     return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
                 }
 
                 var historicoDeVendas = banco.Vendas.Where(v => v.ClienteId == cliente.Id).ToList();
 
+                Console.WriteLine($"[{DateTime.Now}] INFO: Consulta de extrato concluída por '{nomeCliente}'");
                 return Results.Ok(new { cliente = cliente.Nome, saldoAtual = cliente.Saldoinicial, extrato = historicoDeVendas });
             }
             catch (Exception erro)
