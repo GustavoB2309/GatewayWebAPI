@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using GatewayWebAPI.Models;
 using GatewayWebAPI.Data;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GatewayWebAPI.Controller
 {
@@ -49,8 +50,13 @@ namespace GatewayWebAPI.Controller
                     .Take(3)
                     .ToList();
 
+                var totalGastoPeloCliente = banco.Vendas
+                    .Where(v => v.ClienteId == cliente.Id)
+                    .Sum(v => v.Valor);
+
+
                 Console.WriteLine($"[{DateTime.Now}] INFO: Consulta de extrato concluída por '{nomeCliente}'");
-                return Results.Ok(new { cliente = cliente.Nome, saldoAtual = cliente.Saldoinicial, extrato = historicoDeVendas });
+                return Results.Ok(new { cliente = cliente.Nome, saldoAtual = cliente.Saldoinicial, extrato = historicoDeVendas, totalGasto = totalGastoPeloCliente });
             }
             catch (Exception erro)
             {
