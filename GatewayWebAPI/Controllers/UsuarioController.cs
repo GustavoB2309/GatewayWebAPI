@@ -43,7 +43,10 @@ namespace GatewayWebAPI.Controller
                     return Results.BadRequest(new { mensagem = "Erro: Cliente não encontrado no banco de dados." });
                 }
 
-                var historicoDeVendas = banco.Vendas.Where(v => v.ClienteId == cliente.Id).ToList();
+                var historicoDeVendas = banco.Vendas
+                    .Where(v => v.ClienteId == cliente.Id)
+                    .OrderByDescending(v => v.DataHora)
+                    .ToList();
 
                 Console.WriteLine($"[{DateTime.Now}] INFO: Consulta de extrato concluída por '{nomeCliente}'");
                 return Results.Ok(new { cliente = cliente.Nome, saldoAtual = cliente.Saldoinicial, extrato = historicoDeVendas });
