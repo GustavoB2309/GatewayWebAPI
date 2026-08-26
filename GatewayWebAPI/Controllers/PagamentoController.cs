@@ -88,6 +88,15 @@ namespace GatewayWebAPI.Controllers
                 }
 
                 clientenobanco.Saldoinicial = clientenobanco.Saldoinicial - dados.Compra;
+
+                var novaVenda = new VendaCadastro
+                {
+                    ClienteId = clientenobanco.Id,
+                    Valor = dados.Compra,
+                    DataHora = DateTime.Now
+                };
+
+                banco.Vendas.Add(novaVenda);
                 banco.SaveChanges();
 
                 Console.WriteLine($"[{DateTime.Now}] INFO: Checkout concluído com sucesso (pago) para {dados.Cliente}");

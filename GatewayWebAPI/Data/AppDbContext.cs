@@ -11,5 +11,7 @@ public class AppDbContext : DbContext
         }
     
 public DbSet<Requisicaocadastro> Clientes { get; set; }
+public DbSet<VendaCadastro> Vendas { get; set; }
+
 }
 }
